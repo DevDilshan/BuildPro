@@ -1,55 +1,56 @@
-import React from 'react';
-import { 
-  BarChart3, 
-  Building2, 
-  Users, 
-  FileText, 
-  DollarSign, 
-  ClipboardList,
-  HardHat
-} from 'lucide-react';
+"use client"
 
-const Sidebar = ({ activeView, onViewChange }) => {
+const Sidebar = ({ activeSection, setActiveSection, user, onLogout }) => {
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'projects', label: 'Projects', icon: Building2 },
-    { id: 'resources', label: 'Resources', icon: Users },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'finance', label: 'Finance', icon: DollarSign },
-    { id: 'reports', label: 'Reports', icon: ClipboardList },
-  ];
+    { id: "dashboard", name: "Dashboard", icon: "📊" },
+    { id: "projects", name: "Projects", icon: "🏗️" },
+    { id: "resources", name: "Resources", icon: "👥" },
+    { id: "documents", name: "Documents", icon: "📄" },
+    { id: "finance", name: "Finance", icon: "💰" },
+    { id: "reports", name: "Reports", icon: "📈" },
+  ]
 
   return (
-    <div className="w-64 bg-blue-900 text-white p-6">
-      <div className="flex items-center mb-8">
-        <HardHat className="h-8 w-8 mr-3 text-yellow-400" />
-        <h1 className="text-xl font-bold">WorksiteX</h1>
+    <div className="bg-gray-800 text-white w-64 min-h-screen p-4">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">BuildPro</h1>
+        <p className="text-gray-400 text-sm">Construction Management</p>
+        {user && (
+          <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-xs text-gray-400 capitalize">{user.role}</p>
+          </div>
+        )}
       </div>
-      
-      <nav>
-        <ul className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.id}>
-                <button
-                  onClick={() => onViewChange(item.id)}
-                  className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-                    activeView === item.id
-                      ? 'bg-blue-800 text-yellow-400'
-                      : 'text-blue-100 hover:bg-blue-800 hover:text-white'
-                  }`}
-                >
-                  <Icon className="h-5 w-5 mr-3" />
-                  {item.label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </div>
-  );
-};
 
-export default Sidebar;
+      <nav className="space-y-2">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveSection(item.id)}
+            className={`w-full text-left p-3 rounded-lg transition-colors ${
+              activeSection === item.id ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"
+            }`}
+          >
+            <span className="mr-3">{item.icon}</span>
+            {item.name}
+          </button>
+        ))}
+      </nav>
+
+      {user && (
+        <div className="mt-8 pt-4 border-t border-gray-700">
+          <button
+            onClick={onLogout}
+            className="w-full text-left p-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          >
+            <span className="mr-3">🚪</span>
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default Sidebar

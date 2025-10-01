@@ -1,51 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Calendar, MapPin, Users, DollarSign, X, Pencil, Trash2 } from 'lucide-react';
 
 const Projects = () => {
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [editProject, setEditProject] = useState(null); // for editing
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'Downtown Office Complex',
-      description: '15-story mixed-use building with retail and office space',
-      location: '123 Main St, Downtown',
-      startDate: '2024-01-15',
-      endDate: '2024-08-15',
-      budget: 2500000,
-      progress: 75,
-      status: 'Active',
-      manager: 'John Smith',
-      workers: 25
-    },
-    {
-      id: 2,
-      name: 'Residential Tower A',
-      description: '20-story residential apartment complex',
-      location: '456 Oak Ave, Midtown',
-      startDate: '2024-02-01',
-      endDate: '2024-09-30',
-      budget: 3200000,
-      progress: 45,
-      status: 'Active',
-      manager: 'Sarah Johnson',
-      workers: 32
-    },
-    {
-      id: 3,
-      name: 'Shopping Center Phase 2',
-      description: 'Expansion of existing retail center',
-      location: '789 Commerce Blvd, Suburbs',
-      startDate: '2023-11-01',
-      endDate: '2024-07-10',
-      budget: 1800000,
-      progress: 90,
-      status: 'Active',
-      manager: 'Mike Davis',
-      workers: 18
-    }
-  ]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch("http://localhost:8080/api/projects");
+        if (!res.ok) throw new Error("Failed to load projects");
+        const data = await res.json();
+        setProjects(data);
+      } catch (e) {
+        setError("Failed to load projects");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -58,11 +38,10 @@ const Projects = () => {
   };
 
   // Handle new project
-  const handleNewProject = (e) => {
+  const handleNewProject = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const newProject = {
-      id: projects.length + 1,
       name: formData.get("name"),
       description: formData.get("description"),
       location: formData.get("location"),
@@ -74,8 +53,19 @@ const Projects = () => {
       manager: formData.get("manager"),
       workers: Number(formData.get("workers"))
     };
-    setProjects([...projects, newProject]);
-    setShowNewProjectForm(false);
+    try {
+      const res = await fetch("http://localhost:8080/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProject)
+      });
+      if (!res.ok) throw new Error("Failed to create project");
+      const created = await res.json();
+      setProjects([...projects, created]);
+      setShowNewProjectForm(false);
+    } catch (e) {
+      alert("Failed to create project");
+    }
   };
 
   // Handle delete
@@ -112,8 +102,8 @@ const Projects = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Projects</h1>
           <p className="text-gray-600">Manage and track your construction projects</p>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => setShowNewProjectForm(true)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center"
         >
@@ -199,6 +189,8 @@ const Projects = () => {
         </div>
       )}
 
+      {loading && <div className="text-gray-600">Loading...</div>}
+      {error && <div className="text-red-600">{error}</div>}
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {projects.map((project) => (
