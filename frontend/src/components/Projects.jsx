@@ -1,98 +1,129 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Calendar, MapPin, Users, DollarSign, X, Pencil, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from "react"
+import { Plus, Calendar, MapPin, Users, DollarSign, X, Pencil, Trash2 } from "lucide-react"
 
 const Projects = () => {
-  const [showNewProjectForm, setShowNewProjectForm] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [editProject, setEditProject] = useState(null); // for editing
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showNewProjectForm, setShowNewProjectForm] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null)
+  const [editProject, setEditProject] = useState(null)
+  const [projects, setProjects] = useState([])
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await fetch("http://localhost:8080/api/projects");
-        if (!res.ok) throw new Error("Failed to load projects");
-        const data = await res.json();
-        setProjects(data);
-      } catch (e) {
-        setError("Failed to load projects");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    fetchProjects()
+  }, [])
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Planning': return 'bg-gray-100 text-gray-800';
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'On Hold': return 'bg-yellow-100 text-yellow-800';
-      case 'Completed': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/projects")
+      if (!res.ok) throw new Error("Failed to load projects")
+      const data = await res.json()
+      setProjects(data)
+    } catch (e) {
+      console.error(e)
+      alert("Could not fetch projects. Please check backend.")
     }
-  };
+  }
 
-  // Handle new project
-  const handleNewProject = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const newProject = {
-      name: formData.get("name"),
-      description: formData.get("description"),
-      location: formData.get("location"),
-      startDate: formData.get("startDate"),
-      endDate: formData.get("endDate"),
-      budget: Number(formData.get("budget")),
+  const handleAddProject = async (e) => {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const payload = {
+      name: fd.get("name"),
+      description: fd.get("description"),
+      location: fd.get("location"),
+      startDate: fd.get("startDate"),
+      endDate: fd.get("endDate"),
+      budget: Number(fd.get("budget")),
+      manager: fd.get("manager"),
+      workers: Number(fd.get("workers")),
+      status: "Planning",
       progress: 0,
-      status: 'Planning',
-      manager: formData.get("manager"),
-      workers: Number(formData.get("workers"))
-    };
+    }
+
     try {
       const res = await fetch("http://localhost:8080/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProject)
-      });
-      if (!res.ok) throw new Error("Failed to create project");
-      const created = await res.json();
-      setProjects([...projects, created]);
-      setShowNewProjectForm(false);
-    } catch (e) {
-      alert("Failed to create project");
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("Failed to create project")
+
+      const newProject = await res.json()
+
+      setProjects((prevProjects) => [...prevProjects, newProject])
+
+      setShowNewProjectForm(false)
+      e.currentTarget.reset()
+      fetchProjects()
+    } catch (err) {
+      console.error(err)
     }
-  };
+  }
 
-  // Handle delete
-  const handleDelete = (id) => {
-    setProjects(projects.filter(p => p.id !== id));
-    setSelectedProject(null);
-  };
+  const handleEditSave = async (e) => {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const payload = {
+      name: fd.get("name"),
+      description: fd.get("description"),
+      location: fd.get("location"),
+      startDate: fd.get("startDate"),
+      endDate: fd.get("endDate"),
+      budget: Number(fd.get("budget")),
+      manager: fd.get("manager"),
+      workers: Number(fd.get("workers")),
+      status: editProject.status,
+      progress: editProject.progress,
+    }
 
-  // Handle edit save
-  const handleEditSave = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const updatedProject = {
-      ...editProject,
-      name: formData.get("name"),
-      description: formData.get("description"),
-      location: formData.get("location"),
-      startDate: formData.get("startDate"),
-      endDate: formData.get("endDate"),
-      budget: Number(formData.get("budget")),
-      manager: formData.get("manager"),
-      workers: Number(formData.get("workers"))
-    };
-    setProjects(projects.map(p => (p.id === editProject.id ? updatedProject : p)));
-    setEditProject(null);
-    setSelectedProject(updatedProject); // keep modal updated
-  };
+    try {
+      const res = await fetch(`http://localhost:8080/api/projects/${editProject.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("Failed to update project")
+
+      await res.json()
+      setEditProject(null)
+      fetchProjects()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleDeleteProject = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) return
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/projects/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) throw new Error("Failed to delete project")
+
+      fetchProjects()
+      setSelectedProject(null)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Planning":
+        return "bg-gray-100 text-gray-800"
+      case "Active":
+        return "bg-green-100 text-green-800"
+      case "On Hold":
+        return "bg-yellow-100 text-yellow-800"
+      case "Completed":
+        return "bg-blue-100 text-blue-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   return (
     <div className="p-8">
@@ -102,7 +133,6 @@ const Projects = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Projects</h1>
           <p className="text-gray-600">Manage and track your construction projects</p>
         </div>
-
         <button
           onClick={() => setShowNewProjectForm(true)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center"
@@ -117,7 +147,7 @@ const Projects = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
             <h2 className="text-2xl font-bold mb-6">Create New Project</h2>
-            <form onSubmit={handleNewProject} className="space-y-4">
+            <form onSubmit={handleAddProject} className="space-y-4">
               <input name="name" placeholder="Project Name" className="w-full border px-3 py-2 rounded" required />
               <input name="description" placeholder="Description" className="w-full border px-3 py-2 rounded" required />
               <input name="location" placeholder="Location" className="w-full border px-3 py-2 rounded" required />
@@ -127,8 +157,12 @@ const Projects = () => {
               <input name="manager" placeholder="Manager" className="w-full border px-3 py-2 rounded" required />
               <input type="number" name="workers" placeholder="Workers" className="w-full border px-3 py-2 rounded" required />
               <div className="flex justify-end space-x-4 pt-4">
-                <button type="button" onClick={() => setShowNewProjectForm(false)} className="px-4 py-2 text-gray-600">Cancel</button>
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">Create</button>
+                <button type="button" onClick={() => setShowNewProjectForm(false)} className="px-4 py-2 text-gray-600">
+                  Cancel
+                </button>
+                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
+                  Create
+                </button>
               </div>
             </form>
           </div>
@@ -150,8 +184,12 @@ const Projects = () => {
               <input name="manager" defaultValue={editProject.manager} className="w-full border px-3 py-2 rounded" required />
               <input type="number" name="workers" defaultValue={editProject.workers} className="w-full border px-3 py-2 rounded" required />
               <div className="flex justify-end space-x-4 pt-4">
-                <button type="button" onClick={() => setEditProject(null)} className="px-4 py-2 text-gray-600">Cancel</button>
-                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded">Save</button>
+                <button type="button" onClick={() => setEditProject(null)} className="px-4 py-2 text-gray-600">
+                  Cancel
+                </button>
+                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded">
+                  Save
+                </button>
               </div>
             </form>
           </div>
@@ -176,12 +214,11 @@ const Projects = () => {
               <p className="text-sm text-gray-700">Status: {selectedProject.status}</p>
               <p className="text-sm text-gray-700">Progress: {selectedProject.progress}%</p>
             </div>
-            {/* Action buttons */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button onClick={() => setEditProject(selectedProject)} className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+              <button onClick={() => { setEditProject(selectedProject); setSelectedProject(null) }} className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
                 <Pencil className="h-4 w-4 mr-2" /> Edit
               </button>
-              <button onClick={() => handleDelete(selectedProject.id)} className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+              <button onClick={() => handleDeleteProject(selectedProject.id)} className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
                 <Trash2 className="h-4 w-4 mr-2" /> Delete
               </button>
             </div>
@@ -189,8 +226,6 @@ const Projects = () => {
         </div>
       )}
 
-      {loading && <div className="text-gray-600">Loading...</div>}
-      {error && <div className="text-red-600">{error}</div>}
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {projects.map((project) => (
@@ -214,7 +249,7 @@ const Projects = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Projects;
+export default Projects
