@@ -13,27 +13,27 @@ import java.util.List;
 @RequestMapping("/transactions")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class TransactionController {
-
+    
     @Autowired
     private TransactionService transactionService;
-
+    
     @GetMapping
     public List<Transaction> getAllTransactions() {
         return transactionService.getAllTransactions();
     }
-
+    
     @GetMapping("/{id}")
     public ResponseEntity<Transaction> getTransactionById(@PathVariable Long id) {
         return transactionService.getTransactionById(id)
                 .map(transaction -> ResponseEntity.ok().body(transaction))
                 .orElse(ResponseEntity.notFound().build());
     }
-
+    
     @PostMapping
     public Transaction createTransaction(@Valid @RequestBody Transaction transaction) {
         return transactionService.createTransaction(transaction);
     }
-
+    
     @PutMapping("/{id}")
     public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @Valid @RequestBody Transaction transactionDetails) {
         try {
@@ -43,7 +43,7 @@ public class TransactionController {
             return ResponseEntity.notFound().build();
         }
     }
-
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
         try {
@@ -53,30 +53,29 @@ public class TransactionController {
             return ResponseEntity.notFound().build();
         }
     }
-
+    
     @GetMapping("/type/{type}")
     public List<Transaction> getTransactionsByType(@PathVariable String type) {
         return transactionService.getTransactionsByType(type);
     }
-
+    
     @GetMapping("/project/{projectId}")
     public List<Transaction> getTransactionsByProject(@PathVariable Long projectId) {
         return transactionService.getTransactionsByProject(projectId);
     }
-
+    
     @GetMapping("/stats/income")
     public ResponseEntity<BigDecimal> getTotalIncome() {
         return ResponseEntity.ok(transactionService.getTotalIncome());
     }
-
+    
     @GetMapping("/stats/expenses")
     public ResponseEntity<BigDecimal> getTotalExpenses() {
         return ResponseEntity.ok(transactionService.getTotalExpenses());
     }
-
+    
     @GetMapping("/stats/expenses/project/{projectId}")
     public ResponseEntity<BigDecimal> getTotalExpensesByProject(@PathVariable Long projectId) {
         return ResponseEntity.ok(transactionService.getTotalExpensesByProject(projectId));
     }
 }
-

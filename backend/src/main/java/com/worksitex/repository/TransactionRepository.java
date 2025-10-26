@@ -12,13 +12,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByType(String type);
     List<Transaction> findByCategory(String category);
     List<Transaction> findByProjectId(Long projectId);
-
+    
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = 'income'")
     BigDecimal getTotalIncome();
-
+    
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = 'expense'")
     BigDecimal getTotalExpenses();
-
+    
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.project.id = ?1 AND t.type = 'expense'")
     BigDecimal getTotalExpensesByProject(Long projectId);
 }

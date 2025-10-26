@@ -12,27 +12,27 @@ import java.util.List;
 @RequestMapping("/projects")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ProjectController {
-    
+
     @Autowired
     private ProjectService projectService;
-    
+
     @GetMapping
     public List<Project> getAllProjects() {
         return projectService.getAllProjects();
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
         return projectService.getProjectById(id)
                 .map(project -> ResponseEntity.ok().body(project))
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @PostMapping
     public Project createProject(@Valid @RequestBody Project project) {
         return projectService.createProject(project);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable Long id, @Valid @RequestBody Project projectDetails) {
         try {
@@ -42,7 +42,7 @@ public class ProjectController {
             return ResponseEntity.notFound().build();
         }
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
         try {
@@ -52,17 +52,17 @@ public class ProjectController {
             return ResponseEntity.notFound().build();
         }
     }
-    
+
     @GetMapping("/status/{status}")
     public List<Project> getProjectsByStatus(@PathVariable String status) {
         return projectService.getProjectsByStatus(status);
     }
-    
+
     @GetMapping("/search")
     public List<Project> searchProjects(@RequestParam String keyword) {
         return projectService.searchProjects(keyword);
     }
-    
+
     @GetMapping("/stats/active-count")
     public ResponseEntity<Long> getActiveProjectsCount() {
         return ResponseEntity.ok(projectService.getActiveProjectsCount());

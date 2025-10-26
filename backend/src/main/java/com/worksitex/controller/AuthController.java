@@ -43,6 +43,7 @@ public class AuthController {
         body.put("email", user.getEmail());
         body.put("firstName", user.getFirstName());
         body.put("lastName", user.getLastName());
+        body.put("role", user.getRole());
         body.put("message", "Login successful");
         return ResponseEntity.ok(body);
     }
@@ -64,6 +65,7 @@ public class AuthController {
                 signUpRequest.getFirstName(),
                 signUpRequest.getLastName());
         user.setPhone(signUpRequest.getPhone());
+        user.setRole(signUpRequest.getRole().iterator().next());
         userRepository.save(user);
 
         return ResponseEntity.ok(simpleMessage("User registered successfully"));
@@ -74,4 +76,21 @@ public class AuthController {
         map.put("message", message);
         return map;
     }
+
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        var users = userRepository.findAll();
+        return ResponseEntity.ok(users);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.status(404).body(simpleMessage("User not found"));
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.ok(simpleMessage("User deleted successfully"));
+    }
+
+
 }
